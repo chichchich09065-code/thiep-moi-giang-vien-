@@ -129,46 +129,46 @@
   <script>
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
-    const frame = new Image(); 
-    frame.src = "frame.png"; 
+    const frame = new Image();  
+    frame.src = "frame.png";    
 
-    // Kích thước canvas cố định theo tỉ lệ 29.7cm x 21cm (~A4)
+    // BƯỚC 1: CẬP NHẬT KÍCH THƯỚC CANVAS (KHỚP VỚI 2000x1414 PX CỦA FRAME.PNG)
     const CANVAS_WIDTH = 2000;
     const CANVAS_HEIGHT = 1414;
 
     let uploadedImg = null;
 
     const cropControls = {
-      zoom: 1.0,
-      offsetX: 0,
-      offsetY: 0
+        zoom: 1.0,
+        offsetX: 0,
+        offsetY: 0
     };
 
     frame.onload = function() {
-      canvas.width = CANVAS_WIDTH;
-      canvas.height = CANVAS_HEIGHT;
-      drawAll();
+        canvas.width = CANVAS_WIDTH;
+        canvas.height = CANVAS_HEIGHT;
+        drawAll();
     };
 
     document.getElementById("upload").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        uploadedImg = new Image();
-        uploadedImg.onload = () => {
-          document.getElementById("cropControls").style.display = "flex";
-          document.getElementById("zoomSlider").value = 1.0;
-          document.getElementById("offsetX").value = 0;
-          document.getElementById("offsetY").value = 0;
-          cropControls.zoom = 1.0;
-          cropControls.offsetX = 0;
-          cropControls.offsetY = 0;
-          drawAll();
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            uploadedImg = new Image();
+            uploadedImg.onload = () => {
+                document.getElementById("cropControls").style.display = "flex";
+                document.getElementById("zoomSlider").value = 1.0;
+                document.getElementById("offsetX").value = 0;
+                document.getElementById("offsetY").value = 0;
+                cropControls.zoom = 1.0;
+                cropControls.offsetX = 0;
+                cropControls.offsetY = 0;
+                drawAll();
+            };
+            uploadedImg.src = event.target.result;
         };
-        uploadedImg.src = event.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
     });
 
     document.querySelectorAll("#cropControls input").forEach(input => {
@@ -180,104 +180,100 @@
         });
     });
 
-    function drawAdjustedImage(img, circleX, circleY, circleSize) {
-      const imgRatio = img.width / img.height;
-      const destWidth = circleSize;
-      const destHeight = circleSize; 
+    // HÀM DRAW ADJUSTED IMAGE ĐÃ TỐI ƯU HÓA LOGIC ZOOm/PAN (Chỉ dùng 5 tham số)
+    function drawAdjustedImage(img, destX, destY, destSize) {
+        // 1. Tỷ lệ cơ bản để ảnh lấp đầy khung tròn (destSize)
+        const ratio = Math.max(destSize / img.width, destSize / img.height);
+        
+        // 2. Kích thước ảnh sau khi áp dụng tỉ lệ base và zoom
+        const scaledWidth = img.width * ratio * cropControls.zoom;
+        const scaledHeight = img.height * ratio * cropControls.zoom;
 
-      let sourceWidth, sourceHeight;
-      if (imgRatio > 1) { 
-        sourceHeight = img.height;
-        sourceWidth = img.height; 
-      } else { 
-        sourceWidth = img.width;
-        sourceHeight = img.width; 
-      }
+        // 3. Tính toán vị trí bắt đầu vẽ để ảnh được căn giữa trong khung destSize
+        const centerX = destX + destSize / 2;
+        const centerY = destY + destSize / 2;
+        let drawX = centerX - scaledWidth / 2;
+        let drawY = centerY - scaledHeight / 2;
+        
+        // 4. Áp dụng Offset từ Slider
+        const maxXMove = (scaledWidth - destSize) / 2;
+        const maxYMove = (scaledHeight - destSize) / 2;
+        
+        drawX -= (cropControls.offsetX / 100) * maxXMove;
+        drawY -= (cropControls.offsetY / 100) * maxYMove;
 
-      const scale = cropControls.zoom;
-      sourceWidth /= scale;
-      sourceHeight /= scale;
-      
-      sourceWidth = Math.min(sourceWidth, img.width);
-      sourceHeight = Math.min(sourceHeight, img.height);
-
-      let sourceX = (img.width - sourceWidth) / 2;
-      let sourceY = (img.height - sourceHeight) / 2;
-
-      const maxOffsetRangeX = (img.width - sourceWidth); 
-      const maxOffsetRangeY = (img.height - sourceHeight);
-      
-      sourceX -= (cropControls.offsetX / 200) * maxOffsetRangeX; 
-      sourceY -= (cropControls.offsetY / 200) * maxOffsetRangeY;
-      
-      sourceX = Math.max(0, Math.min(sourceX, img.width - sourceWidth));
-      sourceY = Math.max(0, Math.min(sourceY, img.height - sourceHeight));
-
-      ctx.drawImage(
-        img, 
-        sourceX, sourceY, sourceWidth, sourceHeight, 
-        circleX, circleY, destWidth, destHeight    
-      );
+        // 5. Vẽ ảnh (ctx.clip() đã lo việc cắt hình tròn)
+        ctx.drawImage(
+            img,
+            drawX, 
+            drawY, 
+            scaledWidth, 
+            scaledHeight
+        );
     }
 
     function drawAll() {
-      const danhXung = document.getElementById("line1").value;
-      const ten = document.getElementById("line2").value;
-      const chucVu = document.getElementById("line3").value;
+        const danhXung = document.getElementById("line1").value;
+        const ten = document.getElementById("line2").value;
+        const chucVu = document.getElementById("line3").value;
 
-      // 1. Vẽ khung nền 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+        // 1. Vẽ khung nền (đã được tự động co giãn 2000x1414)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ ĐIỀU CHỈNH THEO TỶ LỆ CO GIÃN 0.84
-      const circleX = 1151.35;      
-      const circleY = 166.05;       
-      const circleSize = 392.3;    
+        // BƯỚC 2: CẬP NHẬT TỌA ĐỘ ẢNH (KHUNG TRÒN) - DÙNG GIÁ TRỊ ĐÃ TÍNH TOÁN
+        const circleX = 1151.35;    // X Gốc trên bên trái
+        const circleY = 166.05;     // Y Gốc trên bên trái
+        const circleSize = 392.3;   // Đường kính
 
-      if (uploadedImg) {
-        ctx.save(); 
+        if (uploadedImg) {
+            ctx.save(); 
+            
+            ctx.beginPath();
+            // Tâm hình tròn: circleX + circleSize / 2, circleY + circleSize / 2
+            ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
+            ctx.closePath();
+            ctx.clip(); 
+
+            drawAdjustedImage(uploadedImg, circleX, circleY, circleSize);
+            
+            ctx.restore(); 
+        }
+
+        // BƯỚC 3: CẬP NHẬT TỌA ĐỘ VĂN BẢN (TEXT) - Tối ưu cho bố cục 2000x1414
+        ctx.fillStyle = "#1E2737";  // Màu chữ
+        ctx.textAlign = "center";
         
-        ctx.beginPath();
-        // Tâm hình tròn
-        ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
-        ctx.closePath();
-        ctx.clip(); 
-
-        drawAdjustedImage(uploadedImg, circleX, circleY, circleSize);
+        const textX = 900;          // Tâm X của vùng text (đã tăng từ 750)
+        const textYStart = 680;     // Chân chữ Dòng Tên (đã kéo lên trên)
+        const lineHeight = 50;      // Khoảng cách dòng
         
-        ctx.restore(); 
-      }
+        const finalFontSizeName = 42; // Cỡ chữ Tên
+        const finalFontSizeJob = 35;  // Cỡ chữ Chức vụ
 
-      // 3. Vị trí Văn bản - TỐI ƯU THỦ CÔNG
-      ctx.fillStyle = "#1E2737"; 
-      ctx.textAlign = "center";
-      
-      const textX = 750;       // Tâm X 
-      const textYStart = 760;  // Chân chữ Dòng Tên 
-      const lineHeight = 60;   // Khoảng cách dòng 
+        // DÒNG 1: DANH XƯNG + TÊN
+        const fullName = (danhXung ? danhXung + " " : "") + (ten || "Tên của Anh/Chị");
+        ctx.font = `bold ${finalFontSizeName}px Arial`; 
+        ctx.fillText(fullName, textX, textYStart);
 
-      const finalFontSizeName = 44; 
-      const finalFontSizeJob = 38;
-
-      // DÒNG 1: DANH XƯNG + TÊN
-      const fullName = (danhXung ? danhXung + " " : "") + (ten || "Tên của Anh/Chị");
-      ctx.font = `bold ${finalFontSizeName}px Arial`; 
-      ctx.fillText(fullName, textX, textYStart);
-
-      // DÒNG 2: CHỨC VỤ
-      ctx.font = `${finalFontSizeJob}px Arial`; 
-      ctx.fillText(chucVu || "Chức vụ", textX, textYStart + lineHeight);
+        // DÒNG 2: CHỨC VỤ
+        ctx.font = `${finalFontSizeJob}px Arial`; 
+        ctx.fillText(chucVu || "Chức vụ", textX, textYStart + lineHeight);
     }
 
     document.getElementById("line2").addEventListener("input", drawAll);
     document.getElementById("line3").addEventListener("input", drawAll);
+    
+    // Thêm listener cho select để đảm bảo nó cũng kích hoạt drawAll
+    document.getElementById("line1").addEventListener("change", drawAll);
+
 
     function downloadImage() {
-      const link = document.createElement("a");
-      link.download = "thiep-giang-vien.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+        const link = document.createElement("a");
+        link.download = "thiep-giang-vien.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     }
-  </script>
+</script>
 </body>
 </html>
