@@ -133,8 +133,8 @@
     frame.src = "frame.png"; 
 
     // Kích thước canvas cố định theo tỉ lệ 29.7cm x 21cm (~A4)
-    const CANVAS_WIDTH = 1680;
-    const CANVAS_HEIGHT = 1188;
+    const CANVAS_WIDTH = 2000;
+    const CANVAS_HEIGHT = 1414;
 
     let uploadedImg = null;
 
@@ -230,9 +230,9 @@
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ ĐIỀU CHỈNH THEO TỶ LỆ CO GIÃN 0.84
-      const circleX = 1132;      
-      const circleY = 304;       
-      const circleSize = 330;    
+      const circleX = 1151.35;      
+      const circleY = 166.05;       
+      const circleSize = 392.3;    
 
       if (uploadedImg) {
         ctx.save(); 
