@@ -145,7 +145,6 @@
     };
 
     frame.onload = function() {
-      // Đặt kích thước canvas theo tỉ lệ A4
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
       drawAll();
@@ -231,8 +230,8 @@
       // Ép frame.png vào kích thước A4 (1680x1188)
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ CĂN CHỈNH
-      const circleX = 1395;      
+      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ CĂN CHỈNH CUỐI CÙNG
+      const circleX = 1365;      // Tọa độ X (Lệch phải -> Kéo sang trái)
       const circleY = 385;       
       const circleSize = 350;    
 
@@ -240,6 +239,7 @@
         ctx.save(); 
         
         ctx.beginPath();
+        // Tâm hình tròn
         ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
         ctx.closePath();
         ctx.clip(); 
@@ -249,21 +249,24 @@
         ctx.restore(); 
       }
 
-      // 3. Vị trí Văn bản - ĐÃ CĂN CHỈNH VÀO TÂM CỘT THÔNG TIN
+      // 3. Vị trí Văn bản - ĐÃ CĂN CHỈNH CUỐI CÙNG
       ctx.fillStyle = "#1E2737"; 
       ctx.textAlign = "center";
       
-      const textX = 680; // Căn giữa cột thông tin (LEARNING CENTER)
+      const textX = 700; // Tọa độ X (Lệch trái -> Kéo sang phải, căn giữa cột thông tin)
       const textYStart = 710; 
       const lineHeight = 50; 
 
+      const finalFontSizeName = 44; 
+      const finalFontSizeJob = 38;
+
       // DÒNG 1: DANH XƯNG + TÊN
       const fullName = (danhXung ? danhXung + " " : "") + (ten || "Tên của Anh/Chị");
-      ctx.font = "bold 44px Arial"; 
+      ctx.font = `bold ${finalFontSizeName}px Arial`; 
       ctx.fillText(fullName, textX, textYStart);
 
       // DÒNG 2: CHỨC VỤ
-      ctx.font = "38px Arial"; 
+      ctx.font = `${finalFontSizeJob}px Arial`; 
       ctx.fillText(chucVu || "Chức vụ", textX, textYStart + lineHeight);
     }
 
