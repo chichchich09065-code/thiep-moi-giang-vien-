@@ -7,75 +7,113 @@
   body {
     background: #111;
     color: white;
-    font-family: sans-serif;
     text-align: center;
+    font-family: sans-serif;
   }
-  #canvas-container {
-    position: relative;
-    display: inline-block;
-  }
-  canvas {
-    border-radius: 16px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  #canvas {
+    border-radius: 10px;
+    margin-top: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
   }
   input, button {
     margin: 10px;
     padding: 8px 12px;
+    cursor: pointer;
+  }
+  #crop-container {
+    display: none;
+    position: relative;
+    margin: 20px auto;
+    width: 400px;
+    height: 400px;
+    overflow: hidden;
+    border: 2px dashed #4fc3f7;
+    border-radius: 50%;
+  }
+  #crop-container img {
+    width: 100%;
+    cursor: move;
   }
 </style>
 </head>
 <body>
   <h2>Tạo thiệp tri ân giảng viên</h2>
-  <div id="canvas-container">
-    <canvas id="canvas" width="900" height="600"></canvas>
-  </div>
-  <br>
   <input type="file" id="upload" accept="image/*">
   <button id="download">Tải ảnh về</button>
 
+  <div id="crop-container">
+    <img id="preview">
+  </div>
+
+  <canvas id="canvas" width="900" height="600"></canvas>
+
   <script>
     const frameUrl = "https://raw.githubusercontent.com/chichchich09065-code/thiep-moi-giang-vien-/main/frame.png";
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-
     const frameImg = new Image();
     frameImg.crossOrigin = "anonymous";
     frameImg.src = frameUrl;
 
-    // Khi frame load xong thì vẽ frame lần đầu
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const cropContainer = document.getElementById("crop-container");
+    const preview = document.getElementById("preview");
+
+    // Ban đầu vẽ frame
     frameImg.onload = () => {
       ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
     };
 
-    // Khi người dùng tải ảnh lên
+    // Upload ảnh
     document.getElementById("upload").addEventListener("change", e => {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onload = ev => {
-        const userImg = new Image();
-        userImg.onload = () => {
-          // Xóa canvas cũ
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-          // Vẽ ảnh người (tròn)
-          const x = 640, y = 240, r = 90;
-          ctx.save();
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.closePath();
-          ctx.clip();
-          ctx.drawImage(userImg, x - r, y - r, 2 * r, 2 * r);
-          ctx.restore();
-
-          // Vẽ lại frame đè lên
-          ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
-        };
-        userImg.src = ev.target.result;
+        preview.src = ev.target.result;
+        cropContainer.style.display = "block";
       };
       reader.readAsDataURL(file);
     });
 
-    // Nút tải ảnh
+    // Cho phép kéo ảnh trong khung crop
+    let dragging = false, offsetX, offsetY;
+    preview.addEventListener("mousedown", e => {
+      dragging = true;
+      offsetX = e.offsetX;
+      offsetY = e.offsetY;
+    });
+    preview.addEventListener("mousemove", e => {
+      if (dragging) {
+        preview.style.transform = `translate(${e.offsetX - offsetX}px, ${e.offsetY - offsetY}px)`;
+      }
+    });
+    preview.addEventListener("mouseup", () => dragging = false);
+    preview.addEventListener("mouseleave", () => dragging = false);
+
+    // Khi double-click ảnh crop -> xác nhận chọn vùng
+    preview.addEventListener("dblclick", () => {
+      const userImg = new Image();
+      userImg.onload = () => {
+        // Xóa canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Vẽ ảnh người (tròn)
+        const x = 640, y = 240, r = 90;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(userImg, x - r, y - r, 2 * r, 2 * r);
+        ctx.restore();
+
+        // Vẽ frame đè lên
+        ctx.drawImage(frameImg, 0, 0, canvas.width, canvas.height);
+      };
+      userImg.src = preview.src;
+      cropContainer.style.display = "none";
+    });
+
+    // Tải về ảnh
     document.getElementById("download").addEventListener("click", () => {
       const link = document.createElement("a");
       link.download = "thiep-giang-vien.png";
