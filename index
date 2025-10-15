@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tạo thiệp mời Giảng viên 2025</title>
+
+  <!-- CropperJS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
+
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 40px;
+      padding: 40px;
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 250px;
+    }
+
+    .form input, .form select {
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: none;
+      outline: none;
+    }
+
+    .form label {
+      font-weight: 500;
+    }
+
+    .frame-container {
+      position: relative;
+      width: 1080px;  /* chỉnh theo kích thước ảnh khung của bạn */
+      height: 768px;
+      background: url('Thêm tiêu đề phụ (5).png') no-repeat center/contain;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #uploadImg {
+      display: none;
+    }
+
+    .upload-label {
+      background: #1e90ff;
+      color: white;
+      text-align: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    canvas {
+      display: none;
+    }
+
+    #image {
+      position: absolute;
+      border-radius: 50%;
+      clip-path: circle(160px at center);
+      width: 320px;
+      height: 320px;
+      object-fit: cover;
+    }
+
+    .text-fields {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      color: white;
+    }
+
+    .text-fields p {
+      margin: 4px 0;
+      font-size: 20px;
+      line-height: 1.3;
+      text-shadow: 0 0 6px rgba(0,0,0,0.5);
+    }
+
+    .btn-download {
+      margin-top: 16px;
+      background: #22c55e;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-download:hover {
+      background: #16a34a;
+    }
+  </style>
+</head>
+<body>
+  <!-- FORM NHẬP THÔNG TIN -->
+  <div class="form">
+    <label for="title">Xưng danh</label>
+    <select id="title">
+      <option value="">-- Chọn xưng danh --</option>
+      <option value="Anh">Anh</option>
+      <option value="Chị">Chị</option>
+      <option value="Thầy">Thầy</option>
+      <option value="Cô">Cô</option>
+    </select>
+
+    <label for="name">Tên hiển thị</label>
+    <input type="text" id="name" placeholder="Nhập tên hiển thị..." />
+
+    <label for="position">Chức vụ</label>
+    <input type="text" id="position" placeholder="Nhập chức vụ..." />
+
+    <label class="upload-label" for="uploadImg">+ Tải ảnh lên</label>
+    <input type="file" id="uploadImg" accept="image/*" />
+
+    <button class="btn-download" id="downloadBtn">Tải thiệp mời</button>
+  </div>
+
+  <!-- KHUNG HIỂN THỊ -->
+  <div class="frame-container" id="frameContainer">
+    <img id="image" src="" alt="">
+    <div class="text-fields">
+      <p id="textTitle"></p>
+      <p id="textName" style="font-size: 28px; font-weight: bold;"></p>
+      <p id="textPosition"></p>
+    </div>
+  </div>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const uploadImg = document.getElementById("uploadImg");
+    const image = document.getElementById("image");
+    const titleInput = document.getElementById("title");
+    const nameInput = document.getElementById("name");
+    const positionInput = document.getElementById("position");
+    const textTitle = document.getElementById("textTitle");
+    const textName = document.getElementById("textName");
+    const textPosition = document.getElementById("textPosition");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const canvas = document.getElementById("canvas");
+    let cropper;
+
+    // Cập nhật text realtime
+    function updateText() {
+      textTitle.textContent = titleInput.value;
+      textName.textContent = nameInput.value;
+      textPosition.textContent = positionInput.value;
+    }
+
+    titleInput.addEventListener("change", updateText);
+    nameInput.addEventListener("input", updateText);
+    positionInput.addEventListener("input", updateText);
+
+    // Upload ảnh và tạo cropper
+    uploadImg.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          image.src = reader.result;
+          if (cropper) cropper.destroy();
+          cropper = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: "move",
+            autoCropArea: 1,
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    // Xuất ảnh hoàn chỉnh
+    downloadBtn.addEventListener("click", async () => {
+      if (!cropper) return alert("Hãy tải ảnh trước!");
+
+      const croppedCanvas = cropper.getCroppedCanvas({
+        width: 320,
+        height: 320,
+      });
+
+      const baseImg = new Image();
+      baseImg.src = "Thêm tiêu đề phụ (5).png"; // hoặc frame.png nếu bạn đổi tên
+      baseImg.onload = () => {
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+        const ctx = canvas.getContext("2d");
+
+        // Vẽ nền
+        ctx.drawImage(baseImg, 0, 0);
+
+        // 📍 Vị trí ảnh tròn trong khung (điều chỉnh nếu cần)
+        const x = 750;
+        const y = 250;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + 160, y + 160, 160, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(croppedCanvas, x, y, 320, 320);
+        ctx.restore();
+
+        // Vẽ text
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+
+        ctx.font = "24px Segoe UI";
+        ctx.fillText(titleInput.value, x + 160, y + 360);
+        ctx.font = "bold 32px Segoe UI";
+        ctx.fillText(nameInput.value, x + 160, y + 400);
+        ctx.font = "24px Segoe UI";
+        ctx.fillText(positionInput.value, x + 160, y + 440);
+
+        // Tải ảnh xuống
+        const link = document.createElement("a");
+        link.download = "thiep-moi.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
+    });
+  </script>
+</body>
+</html>
