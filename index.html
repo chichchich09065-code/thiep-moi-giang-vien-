@@ -229,7 +229,7 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - GIỮ NGUYÊN VỊ TRÍ ĐÃ ĐƯỢC XÁC NHẬN LÀ ĐÚNG
+      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - Đã tinh chỉnh lần cuối
       const circleX = 1000;      
       const circleY = 350;       
       const circleSize = 300;    
@@ -248,13 +248,13 @@
         ctx.restore(); 
       }
 
-      // 3. Vị trí Văn bản - TINH CHỈNH CUỐI CÙNG (X=700, Y=750, LineHeight=60)
+      // 3. Vị trí Văn bản - Đã tinh chỉnh lần cuối
       ctx.fillStyle = "#1E2737"; 
       ctx.textAlign = "center";
       
-      const textX = 700;       // Tâm X (Quay về giá trị căn giữa cột thông tin)
-      const textYStart = 750;  // Chân chữ Dòng Tên (Hạ xuống một chút)
-      const lineHeight = 60;   // Khoảng cách dòng (Tối ưu)
+      const textX = 750;       // Tâm X mới (căn giữa cột thông tin)
+      const textYStart = 710;  // Chân chữ Dòng Tên
+      const lineHeight = 60;   // Khoảng cách dòng
 
       const finalFontSizeName = 44; 
       const finalFontSizeJob = 38;
