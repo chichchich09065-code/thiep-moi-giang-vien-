@@ -189,54 +189,44 @@
     });
 
     // Xuất ảnh hoàn chỉnh
-    downloadBtn.addEventListener("click", async () => {
-      if (!cropper) return alert("Hãy tải ảnh trước!");
+    downloadButton.addEventListener('click', () => {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
 
-      const croppedCanvas = cropper.getCroppedCanvas({
-        width: 320,
-        height: 320,
-      });
+  const frameWidth = frame.width;
+  const frameHeight = frame.height;
+  canvas.width = frameWidth;
+  canvas.height = frameHeight;
 
-      const baseImg = new Image();
-      baseImg.src = "frame.png"; // hoặc frame.png nếu bạn đổi tên
-      baseImg.onload = () => {
-        canvas.width = baseImg.width;
-        canvas.height = baseImg.height;
-        const ctx = canvas.getContext("2d");
+  // Vẽ ảnh người dùng nếu có
+  if (uploadedImage) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(frameWidth * 0.81, frameHeight * 0.39, 180, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(uploadedImage, offsetX, offsetY, uploadedImage.width * scale, uploadedImage.height * scale);
+    ctx.restore();
+  }
 
-        // Vẽ nền
-        ctx.drawImage(baseImg, 0, 0);
+  // Vẽ khung nền
+  ctx.drawImage(frame, 0, 0, frameWidth, frameHeight);
 
-        // 📍 Vị trí ảnh tròn trong khung (điều chỉnh nếu cần)
-        const x = 750;
-        const y = 250;
+  // Vẽ text (nếu có)
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${titleInput.value || ''} ${nameInput.value || ''}`, frameWidth * 0.8, frameHeight * 0.75);
+  ctx.font = '28px sans-serif';
+  ctx.fillText(`${positionInput.value || ''}`, frameWidth * 0.8, frameHeight * 0.8);
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(x + 160, y + 160, 160, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(croppedCanvas, x, y, 320, 320);
-        ctx.restore();
+  // Xuất ảnh
+  const link = document.createElement('a');
+  link.download = 'thiep-moi.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
 
-        // Vẽ text
-        ctx.fillStyle = "white";
-        ctx.textAlign = "center";
-
-        ctx.font = "24px Segoe UI";
-        ctx.fillText(titleInput.value, x + 160, y + 360);
-        ctx.font = "bold 32px Segoe UI";
-        ctx.fillText(nameInput.value, x + 160, y + 400);
-        ctx.font = "24px Segoe UI";
-        ctx.fillText(positionInput.value, x + 160, y + 440);
-
-        // Tải ảnh xuống
-        const link = document.createElement("a");
-        link.download = "thiep-moi.png";
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      };
-    });
   </script>
 </body>
 </html>
