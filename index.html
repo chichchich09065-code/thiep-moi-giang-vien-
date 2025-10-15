@@ -42,9 +42,9 @@
 
     .frame-container {
       position: relative;
-      width: 1080px;  /* chỉnh theo kích thước ảnh khung của bạn */
-      height: 768px;
-      background: url('Thêm tiêu đề phụ (5).png') no-repeat center/contain;
+      width: 1280px;
+      height: 720px;
+      background: url("https://chichchich09065-code.github.io/thiep-moi-giang-vien/frame.png") no-repeat center/contain;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -79,11 +79,12 @@
 
     .text-fields {
       position: absolute;
-      bottom: 80px;
+      bottom: 60px;
       left: 50%;
       transform: translateX(-50%);
       text-align: center;
       color: white;
+      width: 100%;
     }
 
     .text-fields p {
@@ -189,44 +190,56 @@
     });
 
     // Xuất ảnh hoàn chỉnh
-    downloadButton.addEventListener('click', () => {
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
+    downloadBtn.addEventListener("click", async () => {
+      if (!cropper) return alert("Hãy tải ảnh trước!");
 
-  const frameWidth = frame.width;
-  const frameHeight = frame.height;
-  canvas.width = frameWidth;
-  canvas.height = frameHeight;
+      const croppedCanvas = cropper.getCroppedCanvas({
+        width: 320,
+        height: 320,
+      });
 
-  // Vẽ ảnh người dùng nếu có
-  if (uploadedImage) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(frameWidth * 0.81, frameHeight * 0.39, 180, 0, Math.PI * 2);
-    ctx.closePath();
-    ctx.clip();
-    ctx.drawImage(uploadedImage, offsetX, offsetY, uploadedImage.width * scale, uploadedImage.height * scale);
-    ctx.restore();
-  }
+      const baseImg = new Image();
+      baseImg.crossOrigin = "anonymous";
+      baseImg.src = "https://chichchich09065-code.github.io/thiep-moi-giang-vien/frame.png";
+      baseImg.onload = () => {
+        canvas.width = baseImg.width;
+        canvas.height = baseImg.height;
+        const ctx = canvas.getContext("2d");
 
-  // Vẽ khung nền
-  ctx.drawImage(frame, 0, 0, frameWidth, frameHeight);
+        // Vẽ nền khung
+        ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
-  // Vẽ text (nếu có)
-  ctx.fillStyle = 'white';
-  ctx.font = 'bold 36px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText(`${titleInput.value || ''} ${nameInput.value || ''}`, frameWidth * 0.8, frameHeight * 0.75);
-  ctx.font = '28px sans-serif';
-  ctx.fillText(`${positionInput.value || ''}`, frameWidth * 0.8, frameHeight * 0.8);
+        // 🎯 Vị trí vòng tròn: khoảng (920, 210)
+        const x = 920;
+        const y = 210;
+        const radius = 160;
 
-  // Xuất ảnh
-  const link = document.createElement('a');
-  link.download = 'thiep-moi.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-});
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x + radius, y + radius, radius, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(croppedCanvas, x, y, radius * 2, radius * 2);
+        ctx.restore();
 
+        // Vẽ text (phía dưới nút "Giảng viên")
+        ctx.fillStyle = "white";
+        ctx.textAlign = "center";
+
+        ctx.font = "24px Segoe UI";
+        ctx.fillText(titleInput.value, x + radius, y + 380);
+        ctx.font = "bold 32px Segoe UI";
+        ctx.fillText(nameInput.value, x + radius, y + 420);
+        ctx.font = "24px Segoe UI";
+        ctx.fillText(positionInput.value, x + radius, y + 460);
+
+        // Xuất file tải xuống
+        const link = document.createElement("a");
+        link.download = "thiep-moi.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      };
+    });
   </script>
 </body>
 </html>
