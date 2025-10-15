@@ -1,127 +1,127 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8" />
-<title>Thiệp Tri Ân Giảng Viên</title>
+<meta charset="UTF-8">
+<title>Tạo Thiệp Giảng Viên</title>
 <style>
   body {
-    background: #111;
-    color: #fff;
-    font-family: sans-serif;
-    text-align: center;
-  }
-  canvas {
     background: #000;
-    border-radius: 12px;
-    margin-top: 15px;
+    color: white;
+    text-align: center;
+    font-family: Arial, sans-serif;
   }
-  #controls {
-    margin: 15px;
-  }
-  #cropArea {
-    display: none;
+
+  #canvasContainer {
     position: relative;
-    margin: 20px auto;
-    width: 300px;
-    height: 300px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 3px solid #4fc3f7;
+    display: inline-block;
   }
-  #cropArea img {
-    position: absolute;
-    cursor: move;
+
+  canvas {
+    border: 2px solid #333;
+    border-radius: 10px;
+    background: #111;
+  }
+
+  .text-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .text-inputs input {
+    width: 300px;
+    margin: 0 auto;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #888;
+    text-align: center;
+    background-color: transparent;
+    color: white;
+  }
+
+  button {
+    margin: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
   <h2>Tạo Thiệp Giảng Viên</h2>
-  <div id="controls">
-    <input type="file" id="upload" accept="image/*" />
-    <button id="confirmCrop">Xác nhận</button>
-    <button id="download">Tải ảnh về</button>
+  <input type="file" id="upload" accept="image/*">
+  <button onclick="downloadImage()">Tải ảnh về</button>
+
+  <div class="text-inputs">
+    <input type="text" id="line1" placeholder="Dòng 1">
+    <input type="text" id="line2" placeholder="Dòng 2">
+    <input type="text" id="line3" placeholder="Dòng 3">
   </div>
 
-  <div id="cropArea"><img id="preview" /></div>
-  <canvas id="canvas" width="900" height="600"></canvas>
+  <div id="canvasContainer">
+    <canvas id="cardCanvas" width="800" height="800"></canvas>
+  </div>
 
   <script>
-    const canvas = document.getElementById("canvas");
+    const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
     const frame = new Image();
-    frame.crossOrigin = "anonymous";
-    frame.src = "https://raw.githubusercontent.com/chichchich09065-code/thiep-moi-giang-vien-/main/frame.png";
+    frame.src = "frame.png"; // file khung nền của bạn
 
-    const preview = document.getElementById("preview");
-    const cropArea = document.getElementById("cropArea");
-    let pos = { x: 0, y: 0 }, drag = false;
+    let uploadedImg = null;
 
-    // vẽ frame ngay khi load
-    frame.onload = () => ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+    frame.onload = function() {
+      drawAll();
+    };
 
-    // upload ảnh
-    document.getElementById("upload").addEventListener("change", e => {
+    document.getElementById("upload").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = ev => {
-        preview.src = ev.target.result;
-        cropArea.style.display = "block";
+      reader.onload = function(event) {
+        uploadedImg = new Image();
+        uploadedImg.onload = () => drawAll();
+        uploadedImg.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    // Kéo ảnh crop
-    preview.addEventListener("mousedown", e => {
-      drag = true;
-      pos = { x: e.offsetX - preview.offsetLeft, y: e.offsetY - preview.offsetTop };
-    });
-    window.addEventListener("mouseup", () => drag = false);
-    window.addEventListener("mousemove", e => {
-      if (!drag) return;
-      preview.style.left = e.clientX - pos.x + "px";
-      preview.style.top = e.clientY - pos.y + "px";
-    });
+    function drawAll() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
 
-    // Xác nhận crop
-    document.getElementById("confirmCrop").addEventListener("click", () => {
-      const size = 200; // kích thước vùng tròn
-      const tempCanvas = document.createElement("canvas");
-      const tctx = tempCanvas.getContext("2d");
-      tempCanvas.width = size;
-      tempCanvas.height = size;
-
-      tctx.save();
-      tctx.beginPath();
-      tctx.arc(size/2, size/2, size/2, 0, Math.PI * 2);
-      tctx.closePath();
-      tctx.clip();
-      tctx.drawImage(preview, 0, 0, size, size);
-      tctx.restore();
-
-      const cropped = new Image();
-      cropped.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      // Vẽ ảnh người trong khung tròn
+      if (uploadedImg) {
+        const x = 520, y = 290, r = 115; // vị trí và bán kính khung tròn
         ctx.save();
         ctx.beginPath();
-        ctx.arc(660, 260, 100, 0, Math.PI * 2);
+        ctx.arc(x + r, y + r, r, 0, Math.PI * 2, true);
+        ctx.closePath();
         ctx.clip();
-        ctx.drawImage(cropped, 560, 160, 200, 200);
+        ctx.drawImage(uploadedImg, x, y, r * 2, r * 2);
         ctx.restore();
-        ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-      };
-      cropped.src = tempCanvas.toDataURL();
-      cropArea.style.display = "none";
+      }
+
+      // Vẽ 3 dòng chữ phía dưới ảnh
+      ctx.fillStyle = "white";
+      ctx.font = "bold 22px Arial";
+      const textY = 590;
+      ctx.textAlign = "center";
+      ctx.fillText(document.getElementById("line1").value || "", 640, textY);
+      ctx.fillText(document.getElementById("line2").value || "", 640, textY + 30);
+      ctx.fillText(document.getElementById("line3").value || "", 640, textY + 60);
+    }
+
+    document.querySelectorAll(".text-inputs input").forEach(input => {
+      input.addEventListener("input", drawAll);
     });
 
-    // tải về
-    document.getElementById("download").addEventListener("click", () => {
-      const a = document.createElement("a");
-      a.href = canvas.toDataURL("image/png");
-      a.download = "thiep-giang-vien.png";
-      a.click();
-    });
+    function downloadImage() {
+      const link = document.createElement("a");
+      link.download = "thiep-giang-vien.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
   </script>
 </body>
 </html>
