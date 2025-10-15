@@ -17,7 +17,9 @@
   }
 
   canvas {
-    /* Canvas sẽ được chỉnh kích thước bằng JS */
+    /* Đảm bảo canvas hiển thị vừa màn hình nhưng giữ tỉ lệ */
+    max-width: 90vw; 
+    height: auto;   
     border: 2px solid #333;
     border-radius: 10px;
     background: #111;
@@ -30,15 +32,37 @@
     margin-top: 10px;
   }
 
+  .text-inputs > div {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  .text-inputs select {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #888;
+    text-align: center;
+    background-color: #333;
+    color: white;
+    width: 100px; /* Độ rộng cho select Danh xưng */
+  }
+
   .text-inputs input {
+    /* Độ rộng cho input Tên và Chức vụ */
     width: 300px;
-    margin: 0 auto;
     padding: 6px;
     border-radius: 6px;
     border: 1px solid #888;
     text-align: center;
     background-color: transparent;
     color: white;
+    margin: 0; /* Đảm bảo không có margin thừa */
+  }
+
+  /* Điều chỉnh độ rộng riêng cho input Tên để kết hợp với select */
+  #line2 {
+    width: 200px;
   }
 
   button {
@@ -54,9 +78,19 @@
   <button onclick="downloadImage()">Tải ảnh về</button>
 
   <div class="text-inputs">
-    <input type="text" id="line1" placeholder="Danh xưng (VD: TS., ThS.)">
-    <input type="text" id="line2" placeholder="Tên của Anh/Chị (VD: Nguyễn Văn A)">
-    <input type="text" id="line3" placeholder="Chức vụ (VD: Trưởng Khoa, Giảng viên)">
+    <div>
+      <select id="line1" onchange="drawAll()">
+        <option value="">-- Danh xưng --</option>
+        <option value="Anh">Anh</option>
+        <option value="Chị">Chị</option>
+        <option value="Mr">Mr</option>
+        <option value="Ms">Ms</option>
+        <option value="Ông">Ông</option>
+        <option value="Bà">Bà</option>
+      </select>
+      <input type="text" id="line2" placeholder="Tên của Anh/Chị">
+    </div>
+    <input type="text" id="line3" placeholder="Chức vụ (VD: Giảng viên nội bộ)">
   </div>
 
   <div id="canvasContainer">
@@ -67,12 +101,13 @@
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
     const frame = new Image(); 
+    // ⚠️ Đảm bảo file 'frame.png' nằm cùng thư mục
     frame.src = "frame.png"; 
 
     let uploadedImg = null;
 
     frame.onload = function() {
-      // 1. CHỈNH SỬA: Thay đổi kích thước canvas theo kích thước frame.png thực tế
+      // Đặt kích thước canvas theo kích thước gốc của frame.png
       canvas.width = frame.naturalWidth;
       canvas.height = frame.naturalHeight;
       drawAll();
@@ -117,22 +152,25 @@
     }
 
     function drawAll() {
-      // 1. Luôn vẽ khung nền trước tiên (với kích thước thật của frame.png)
+      // Lấy giá trị từ các trường nhập liệu
+      const danhXung = document.getElementById("line1").value;
+      const ten = document.getElementById("line2").value;
+      const chucVu = document.getElementById("line3").value;
+
+      // 1. Vẽ khung nền 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
 
-      // 2. Nếu có ảnh tải lên, vẽ nó vào vị trí khung tròn
+      // 2. Vẽ ảnh người vào khung tròn
       if (uploadedImg) {
-        // Tọa độ và kích thước khung tròn (cần điều chỉnh nếu frame.png của bạn có kích thước rất khác)
-        // **Vị trí này được ước tính cho frame.png có tỉ lệ 4:3 hoặc gần như vậy**
-        // **Vui lòng điều chỉnh các giá trị này nếu frame.png có kích thước khác**
-        const circleX = 590; 
-        const circleY = 270; 
-        const circleSize = 120; 
+        // Tọa độ và kích thước khung tròn (Dựa trên frame.png mới, khoảng 1366x768)
+        const circleX = 998; 
+        const circleY = 278; 
+        const circleSize = 250; 
 
         ctx.save(); 
 
-        // Tạo một vùng cắt (clipping path) là hình tròn
+        // Tạo vùng cắt (clipping path) là hình tròn
         ctx.beginPath();
         ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
         ctx.closePath();
@@ -144,26 +182,28 @@
         ctx.restore(); 
       }
 
-      // 3. Vẽ 3 dòng chữ
-      ctx.fillStyle = "white";
-      ctx.font = "bold 22px Arial";
+      // 3. Vẽ văn bản
+      ctx.fillStyle = "#1E2737"; 
       
-      // Vị trí văn bản (Ước tính cho khu vực văn bản trên frame)
-      const textX = 640; 
-      const textYStart = 590; 
+      // Vị trí và kích thước font cho văn bản trên khung bên phải (màu xanh)
+      const textX = 1125; 
+      const textYStart = 640; 
+      const lineHeight = 40; 
       ctx.textAlign = "center";
+      
+      // DÒNG 1: DANH XƯNG + TÊN
+      const fullName = (danhXung ? danhXung + " " : "") + (ten || "Tên của Anh/Chị");
+      ctx.font = "bold 34px Arial"; // Font to hơn cho Tên
+      ctx.fillText(fullName, textX, textYStart);
 
-      // Danh xưng
-      ctx.fillText(document.getElementById("line1").value || "Danh xưng", textX, textYStart);
-      // Tên
-      ctx.fillText(document.getElementById("line2").value || "Tên của Anh/Chị", textX, textYStart + 30);
-      // Chức vụ
-      ctx.fillText(document.getElementById("line3").value || "Chức vụ", textX, textYStart + 60);
+      // DÒNG 2: CHỨC VỤ
+      ctx.font = "30px Arial"; // Font nhỏ hơn cho Chức vụ
+      ctx.fillText(chucVu || "Chức vụ", textX, textYStart + lineHeight);
     }
 
-    document.querySelectorAll(".text-inputs input").forEach(input => {
-      input.addEventListener("input", drawAll);
-    });
+    document.getElementById("line2").addEventListener("input", drawAll);
+    document.getElementById("line3").addEventListener("input", drawAll);
+    // line1 đã dùng onchange="drawAll()" trong HTML
 
     function downloadImage() {
       const link = document.createElement("a");
@@ -171,6 +211,9 @@
       link.href = canvas.toDataURL("image/png");
       link.click();
     }
+    
+    // Gọi drawAll lần đầu để hiển thị frame ngay cả khi chưa load xong ảnh
+    // frame.onload đã gọi drawAll(), nên không cần gọi ở đây
   </script>
 </body>
 </html>
