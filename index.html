@@ -31,10 +31,17 @@
     padding: 10px;
     border: 1px solid #555;
     border-radius: 8px;
-    display: flex;
+    display: flex; /* Đảm bảo nó là flex để hiển thị theo cột */
     flex-direction: column;
     align-items: center;
     gap: 10px;
+  }
+
+  #cropControls div {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
   }
 
   .text-inputs {
@@ -83,14 +90,18 @@
 
   <div id="cropControls" style="display:none;">
     <h4>Điều chỉnh Ảnh (Chỉ hiện khi có ảnh)</h4>
-    <label for="zoomSlider">Phóng to/Thu nhỏ:</label>
-    <input type="range" id="zoomSlider" min="0.5" max="3" step="0.05" value="1" oninput="drawAll()">
-    
-    <label for="offsetX">Di chuyển Ngang:</label>
-    <input type="range" id="offsetX" min="-100" max="100" step="1" value="0" oninput="drawAll()">
-
-    <label for="offsetY">Di chuyển Dọc:</label>
-    <input type="range" id="offsetY" min="-100" max="100" step="1" value="0" oninput="drawAll()">
+    <div>
+        <label for="zoomSlider">Phóng to/Thu nhỏ (Zoom):</label>
+        <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" oninput="drawAll()">
+    </div>
+    <div>
+        <label for="offsetX">Di chuyển Ngang (Offset X):</label>
+        <input type="range" id="offsetX" min="-100" max="100" step="1" value="0" oninput="drawAll()">
+    </div>
+    <div>
+        <label for="offsetY">Di chuyển Dọc (Offset Y):</label>
+        <input type="range" id="offsetY" min="-100" max="100" step="1" value="0" oninput="drawAll()">
+    </div>
   </div>
 
   <div class="text-inputs">
@@ -119,22 +130,21 @@
     const frame = new Image(); 
     frame.src = "frame.png"; 
 
-    // Kích thước canvas cố định theo tỉ lệ 29.7cm x 21cm
-    // Tỉ lệ 1.414:1. Chọn 1680x1188 pixels cho độ phân giải cao.
+    // Kích thước canvas cố định theo tỉ lệ 29.7cm x 21cm (~A4)
     const CANVAS_WIDTH = 1680;
     const CANVAS_HEIGHT = 1188;
 
     let uploadedImg = null;
 
-    // Biến điều chỉnh ảnh
+    // Biến điều chỉnh ảnh (zoom bắt đầu từ 1.0)
     const cropControls = {
-      zoom: 1,
+      zoom: 1.0,
       offsetX: 0,
       offsetY: 0
     };
 
     frame.onload = function() {
-      // Đặt kích thước canvas theo tỉ lệ A4 (29.7x21)
+      // Đặt kích thước canvas theo tỉ lệ A4
       canvas.width = CANVAS_WIDTH;
       canvas.height = CANVAS_HEIGHT;
       drawAll();
@@ -148,11 +158,11 @@
         uploadedImg = new Image();
         uploadedImg.onload = () => {
           document.getElementById("cropControls").style.display = "flex";
-          // Đặt lại các giá trị zoom/offset khi ảnh mới được tải
-          document.getElementById("zoomSlider").value = 1;
+          // Reset các giá trị điều chỉnh khi ảnh mới được tải
+          document.getElementById("zoomSlider").value = 1.0;
           document.getElementById("offsetX").value = 0;
           document.getElementById("offsetY").value = 0;
-          cropControls.zoom = 1;
+          cropControls.zoom = 1.0;
           cropControls.offsetX = 0;
           cropControls.offsetY = 0;
           drawAll();
@@ -177,33 +187,44 @@
      */
     function drawAdjustedImage(img, circleX, circleY, circleSize) {
       const imgRatio = img.width / img.height;
-      
-      // Vùng đích là hình vuông bao quanh khung tròn
       const destWidth = circleSize;
-      const destHeight = circleSize;
+      const destHeight = circleSize; // Vùng đích là hình vuông
 
-      // 1. Tính toán kích thước cắt xén cơ bản (để lấp đầy)
+      // 1. Tính toán kích thước cắt xén ban đầu (để lấp đầy)
       let sourceWidth, sourceHeight;
-      if (imgRatio > 1) { // Ảnh rộng hơn
+      if (imgRatio > 1) { // Ảnh rộng hơn destRatio (1:1)
         sourceHeight = img.height;
-        sourceWidth = img.height;
-      } else { // Ảnh cao hơn
+        sourceWidth = img.height; // Cắt phần vuông từ chiều rộng
+      } else { // Ảnh cao hơn destRatio (1:1)
         sourceWidth = img.width;
-        sourceHeight = img.width;
+        sourceHeight = img.width; // Cắt phần vuông từ chiều cao
       }
 
       // 2. Áp dụng Zoom
       const scale = cropControls.zoom;
       sourceWidth /= scale;
       sourceHeight /= scale;
+      
+      // Đảm bảo không bị cắt quá nhỏ (max zoom out là 1)
+      sourceWidth = Math.min(sourceWidth, img.width);
+      sourceHeight = Math.min(sourceHeight, img.height);
+
 
       // 3. Áp dụng Offset và Căn giữa
       let sourceX = (img.width - sourceWidth) / 2;
       let sourceY = (img.height - sourceHeight) / 2;
 
-      // 4. Áp dụng điều chỉnh Offset của người dùng (tính theo tỉ lệ phần trăm của kích thước cắt xén)
-      sourceX += (cropControls.offsetX / 100) * sourceWidth * scale; 
-      sourceY += (cropControls.offsetY / 100) * sourceHeight * scale;
+      // 4. Áp dụng điều chỉnh Offset của người dùng (dịch chuyển dựa trên phần trăm của kích thước cắt xén hiện tại)
+      // Phạm vi offset: -100 đến 100
+      const maxOffsetRangeX = (img.width - sourceWidth) / 2;
+      const maxOffsetRangeY = (img.height - sourceHeight) / 2;
+      
+      sourceX -= (cropControls.offsetX / 100) * maxOffsetRangeX; 
+      sourceY -= (cropControls.offsetY / 100) * maxOffsetRangeY;
+      
+      // Đảm bảo sourceX, sourceY không nằm ngoài biên ảnh
+      sourceX = Math.max(0, Math.min(sourceX, img.width - sourceWidth));
+      sourceY = Math.max(0, Math.min(sourceY, img.height - sourceHeight));
 
       // Vẽ
       ctx.drawImage(
@@ -220,15 +241,14 @@
 
       // 1. Vẽ khung nền 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Ép frame.png vào kích thước A4 (1680x1188)
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ MỚI ĐÃ CĂN CHỈNH CHO CANVAS 1680x1188
+      // 2. TỌA ĐỘ CUỐI CÙNG ĐÃ CHỈNH SỬA CHO CANVAS 1680x1188
       
       // Vị trí Ảnh (Khung Tròn)
-      const circleX = 1400;      // Góc trên trái
-      const circleY = 395;       
-      const circleSize = 350;    // Đường kính
+      const circleX = 1395;      // Góc trên trái hình vuông bao quanh khung tròn
+      const circleY = 385;       
+      const circleSize = 350;    // Đường kính (350px)
 
       if (uploadedImg) {
         ctx.save(); 
@@ -249,6 +269,7 @@
       ctx.fillStyle = "#1E2737"; 
       ctx.textAlign = "center";
       
+      // Tọa độ văn bản (Căn giữa khu vực phía dưới TRI ÂN)
       const textX = 850; 
       const textYStart = 710; 
       const lineHeight = 50; 
@@ -269,7 +290,6 @@
     function downloadImage() {
       const link = document.createElement("a");
       link.download = "thiep-giang-vien.png";
-      // Tải ảnh với độ phân giải cao đã định sẵn (1680x1188)
       link.href = canvas.toDataURL("image/png");
       link.click();
     }
