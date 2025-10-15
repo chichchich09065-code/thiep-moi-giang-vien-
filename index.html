@@ -35,7 +35,7 @@
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    width: 320px; /* Cố định kích thước khung điều khiển */
+    width: 320px; 
     margin: 10px auto;
   }
 
@@ -138,7 +138,6 @@
 
     let uploadedImg = null;
 
-    // Biến điều chỉnh ảnh (zoom bắt đầu từ 1.0)
     const cropControls = {
       zoom: 1.0,
       offsetX: 0,
@@ -160,7 +159,6 @@
         uploadedImg = new Image();
         uploadedImg.onload = () => {
           document.getElementById("cropControls").style.display = "flex";
-          // Reset các giá trị điều chỉnh khi ảnh mới được tải
           document.getElementById("zoomSlider").value = 1.0;
           document.getElementById("offsetX").value = 0;
           document.getElementById("offsetY").value = 0;
@@ -174,7 +172,6 @@
       reader.readAsDataURL(file);
     });
 
-    // Cập nhật giá trị điều khiển khi thanh trượt thay đổi
     document.querySelectorAll("#cropControls input").forEach(input => {
         input.addEventListener("input", function() {
             cropControls.zoom = parseFloat(document.getElementById("zoomSlider").value);
@@ -184,9 +181,6 @@
         });
     });
 
-    /**
-     * Hàm vẽ ảnh đã được điều chỉnh (zoom, offset) vào vùng tròn
-     */
     function drawAdjustedImage(img, circleX, circleY, circleSize) {
       const imgRatio = img.width / img.height;
       const destWidth = circleSize;
@@ -211,35 +205,33 @@
       let sourceX = (img.width - sourceWidth) / 2;
       let sourceY = (img.height - sourceHeight) / 2;
 
-      // Áp dụng điều chỉnh Offset (dịch chuyển dựa trên phần trăm của biên độ dư)
-      const maxOffsetRangeX = (img.width - sourceWidth); // Phạm vi dịch chuyển tối đa
+      const maxOffsetRangeX = (img.width - sourceWidth); 
       const maxOffsetRangeY = (img.height - sourceHeight);
       
-      sourceX -= (cropControls.offsetX / 200) * maxOffsetRangeX; // Chia 200 để offset hoạt động nhẹ hơn
+      sourceX -= (cropControls.offsetX / 200) * maxOffsetRangeX; 
       sourceY -= (cropControls.offsetY / 200) * maxOffsetRangeY;
       
-      // Đảm bảo sourceX, sourceY không nằm ngoài biên ảnh
       sourceX = Math.max(0, Math.min(sourceX, img.width - sourceWidth));
       sourceY = Math.max(0, Math.min(sourceY, img.height - sourceHeight));
 
       ctx.drawImage(
         img, 
-        sourceX, sourceY, sourceWidth, sourceHeight, // Vùng nguồn (cắt xén)
-        circleX, circleY, destWidth, destHeight    // Vùng đích (trên canvas)
+        sourceX, sourceY, sourceWidth, sourceHeight, 
+        circleX, circleY, destWidth, destHeight    
       );
     }
 
     function drawAll() {
-      // 🚨 FIX: Thêm dấu chấm cho Ms. và Mr. trong Select
       const danhXung = document.getElementById("line1").value;
       const ten = document.getElementById("line2").value;
       const chucVu = document.getElementById("line3").value;
 
       // 1. Vẽ khung nền 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // Ép frame.png vào kích thước A4 (1680x1188)
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ ĐƯỢC XÁC NHẬN
+      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ CĂN CHỈNH
       const circleX = 1395;      
       const circleY = 385;       
       const circleSize = 350;    
@@ -257,13 +249,12 @@
         ctx.restore(); 
       }
 
-      // 3. Vị trí Văn bản - 🌟 TỌA ĐỘ VĂN BẢN MỚI
-      // Căn giữa khu vực thông tin sự kiện
+      // 3. Vị trí Văn bản - ĐÃ CĂN CHỈNH VÀO TÂM CỘT THÔNG TIN
       ctx.fillStyle = "#1E2737"; 
       ctx.textAlign = "center";
       
-      const textX = 490; // Vị trí nằm ngay trên cột thông tin (Tầng 3...)
-      const textYStart = 680; 
+      const textX = 680; // Căn giữa cột thông tin (LEARNING CENTER)
+      const textYStart = 710; 
       const lineHeight = 50; 
 
       // DÒNG 1: DANH XƯNG + TÊN
