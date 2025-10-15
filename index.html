@@ -160,3 +160,124 @@
           document.getElementById("cropControls").style.display = "flex";
           document.getElementById("zoomSlider").value = 1.0;
           document.getElementById("offsetX").value = 0;
+          document.getElementById("offsetY").value = 0;
+          cropControls.zoom = 1.0;
+          cropControls.offsetX = 0;
+          cropControls.offsetY = 0;
+          drawAll();
+        };
+        uploadedImg.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.querySelectorAll("#cropControls input").forEach(input => {
+        input.addEventListener("input", function() {
+            cropControls.zoom = parseFloat(document.getElementById("zoomSlider").value);
+            cropControls.offsetX = parseFloat(document.getElementById("offsetX").value);
+            cropControls.offsetY = parseFloat(document.getElementById("offsetY").value);
+            drawAll();
+        });
+    });
+
+    function drawAdjustedImage(img, circleX, circleY, circleSize) {
+      const imgRatio = img.width / img.height;
+      const destWidth = circleSize;
+      const destHeight = circleSize; 
+
+      let sourceWidth, sourceHeight;
+      if (imgRatio > 1) { 
+        sourceHeight = img.height;
+        sourceWidth = img.height; 
+      } else { 
+        sourceWidth = img.width;
+        sourceHeight = img.width; 
+      }
+
+      const scale = cropControls.zoom;
+      sourceWidth /= scale;
+      sourceHeight /= scale;
+      
+      sourceWidth = Math.min(sourceWidth, img.width);
+      sourceHeight = Math.min(sourceHeight, img.height);
+
+      let sourceX = (img.width - sourceWidth) / 2;
+      let sourceY = (img.height - sourceHeight) / 2;
+
+      const maxOffsetRangeX = (img.width - sourceWidth); 
+      const maxOffsetRangeY = (img.height - sourceHeight);
+      
+      sourceX -= (cropControls.offsetX / 200) * maxOffsetRangeX; 
+      sourceY -= (cropControls.offsetY / 200) * maxOffsetRangeY;
+      
+      sourceX = Math.max(0, Math.min(sourceX, img.width - sourceWidth));
+      sourceY = Math.max(0, Math.min(sourceY, img.height - sourceHeight));
+
+      ctx.drawImage(
+        img, 
+        sourceX, sourceY, sourceWidth, sourceHeight, 
+        circleX, circleY, destWidth, destHeight    
+      );
+    }
+
+    function drawAll() {
+      const danhXung = document.getElementById("line1").value;
+      const ten = document.getElementById("line2").value;
+      const chucVu = document.getElementById("line3").value;
+
+      // 1. Vẽ khung nền 
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - GIỮ NGUYÊN VỊ TRÍ ĐÃ ĐƯỢC XÁC NHẬN LÀ ĐÚNG
+      const circleX = 1000;      
+      const circleY = 350;       
+      const circleSize = 300;    
+
+      if (uploadedImg) {
+        ctx.save(); 
+        
+        ctx.beginPath();
+        // Tâm hình tròn
+        ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
+        ctx.closePath();
+        ctx.clip(); 
+
+        drawAdjustedImage(uploadedImg, circleX, circleY, circleSize);
+        
+        ctx.restore(); 
+      }
+
+      // 3. Vị trí Văn bản - TINH CHỈNH CUỐI CÙNG (X=700, Y=750, LineHeight=60)
+      ctx.fillStyle = "#1E2737"; 
+      ctx.textAlign = "center";
+      
+      const textX = 700;       // Tâm X (Quay về giá trị căn giữa cột thông tin)
+      const textYStart = 750;  // Chân chữ Dòng Tên (Hạ xuống một chút)
+      const lineHeight = 60;   // Khoảng cách dòng (Tối ưu)
+
+      const finalFontSizeName = 44; 
+      const finalFontSizeJob = 38;
+
+      // DÒNG 1: DANH XƯNG + TÊN
+      const fullName = (danhXung ? danhXung + " " : "") + (ten || "Tên của Anh/Chị");
+      ctx.font = `bold ${finalFontSizeName}px Arial`; 
+      ctx.fillText(fullName, textX, textYStart);
+
+      // DÒNG 2: CHỨC VỤ
+      ctx.font = `${finalFontSizeJob}px Arial`; 
+      ctx.fillText(chucVu || "Chức vụ", textX, textYStart + lineHeight);
+    }
+
+    document.getElementById("line2").addEventListener("input", drawAll);
+    document.getElementById("line3").addEventListener("input", drawAll);
+
+    function downloadImage() {
+      const link = document.createElement("a");
+      link.download = "thiep-giang-vien.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+  </script>
+</body>
+</html>
