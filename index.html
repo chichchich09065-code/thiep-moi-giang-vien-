@@ -17,7 +17,7 @@
   }
 
   canvas {
-    /* Đảm bảo canvas có cùng kích thước và tỉ lệ với frame.png */
+    /* Canvas sẽ được chỉnh kích thước bằng JS */
     border: 2px solid #333;
     border-radius: 10px;
     background: #111;
@@ -54,26 +54,27 @@
   <button onclick="downloadImage()">Tải ảnh về</button>
 
   <div class="text-inputs">
-    <input type="text" id="line1" placeholder="Dòng 1">
-    <input type="text" id="line2" placeholder="Dòng 2">
-    <input type="text" id="line3" placeholder="Dòng 3">
+    <input type="text" id="line1" placeholder="Danh xưng (VD: TS., ThS.)">
+    <input type="text" id="line2" placeholder="Tên của Anh/Chị (VD: Nguyễn Văn A)">
+    <input type="text" id="line3" placeholder="Chức vụ (VD: Trưởng Khoa, Giảng viên)">
   </div>
 
   <div id="canvasContainer">
-    <canvas id="cardCanvas" width="800" height="800"></canvas>
+    <canvas id="cardCanvas"></canvas>
   </div>
 
   <script>
     const canvas = document.getElementById("cardCanvas");
     const ctx = canvas.getContext("2d");
-    // ⚠️ CHÚ Ý: Bạn cần đảm bảo file 'frame.png' nằm cùng thư mục hoặc thay đổi đường dẫn phù hợp.
     const frame = new Image(); 
     frame.src = "frame.png"; 
 
     let uploadedImg = null;
 
     frame.onload = function() {
-      // Khi frame.png được tải xong, vẽ lại mọi thứ
+      // 1. CHỈNH SỬA: Thay đổi kích thước canvas theo kích thước frame.png thực tế
+      canvas.width = frame.naturalWidth;
+      canvas.height = frame.naturalHeight;
       drawAll();
     };
 
@@ -83,20 +84,14 @@
       const reader = new FileReader();
       reader.onload = function(event) {
         uploadedImg = new Image();
-        uploadedImg.onload = () => drawAll(); // Khi ảnh tải lên xong, vẽ lại mọi thứ
+        uploadedImg.onload = () => drawAll();
         uploadedImg.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
     /**
-     * Hàm vẽ ảnh đã được cắt xén và căn giữa để lấp đầy vùng đích (thường là hình vuông).
-     * Điều này giúp ảnh không bị méo khi được đưa vào khung.
-     * @param {Image} img Ảnh nguồn.
-     * @param {number} destX Vị trí X của vùng đích trên canvas.
-     * @param {number} destY Vị trí Y của vùng đích trên canvas.
-     * @param {number} destWidth Chiều rộng của vùng đích trên canvas.
-     * @param {number} destHeight Chiều cao của vùng đích trên canvas.
+     * Hàm vẽ ảnh đã được cắt xén và căn giữa để lấp đầy vùng đích.
      */
     function drawCroppedImageToFill(img, destX, destY, destWidth, destHeight) {
       const imgWidth = img.width;
@@ -106,65 +101,66 @@
 
       let sourceX, sourceY, sourceWidth, sourceHeight;
 
-      // Tính toán vùng cắt xén từ ảnh nguồn
       if (imgRatio > destRatio) {
-        // Ảnh rộng hơn vùng đích, cắt chiều rộng của ảnh nguồn
         sourceHeight = imgHeight;
         sourceWidth = imgHeight * destRatio;
         sourceX = (imgWidth - sourceWidth) / 2;
         sourceY = 0;
       } else {
-        // Ảnh cao hơn vùng đích, cắt chiều cao của ảnh nguồn
         sourceWidth = imgWidth;
         sourceHeight = imgWidth / destRatio;
         sourceX = 0;
         sourceY = (imgHeight - sourceHeight) / 2;
       }
 
-      // Vẽ phần đã cắt xén của ảnh nguồn vào vùng đích trên canvas
       ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, destX, destY, destWidth, destHeight);
     }
 
     function drawAll() {
-      // 1. Luôn vẽ khung nền trước tiên
+      // 1. Luôn vẽ khung nền trước tiên (với kích thước thật của frame.png)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(frame, 0, 0, canvas.width, canvas.height);
 
       // 2. Nếu có ảnh tải lên, vẽ nó vào vị trí khung tròn
       if (uploadedImg) {
-        // Dựa trên ảnh frame.png bạn cung cấp:
-        // Đo đạc thủ công (hoặc bằng công cụ) cho thấy khung tròn có vị trí và kích thước xấp xỉ:
-        const circleX = 590; // Tọa độ X của góc trên bên trái hình vuông bao quanh khung tròn
-        const circleY = 270; // Tọa độ Y của góc trên bên trái hình vuông bao quanh khung tròn
-        const circleSize = 120; // Kích thước (chiều rộng/chiều cao) của hình vuông bao quanh khung tròn
+        // Tọa độ và kích thước khung tròn (cần điều chỉnh nếu frame.png của bạn có kích thước rất khác)
+        // **Vị trí này được ước tính cho frame.png có tỉ lệ 4:3 hoặc gần như vậy**
+        // **Vui lòng điều chỉnh các giá trị này nếu frame.png có kích thước khác**
+        const circleX = 590; 
+        const circleY = 270; 
+        const circleSize = 120; 
 
-        ctx.save(); // Lưu trạng thái canvas hiện tại
+        ctx.save(); 
 
         // Tạo một vùng cắt (clipping path) là hình tròn
-        // Tâm của hình tròn là (circleX + circleSize/2, circleY + circleSize/2)
         ctx.beginPath();
         ctx.arc(circleX + circleSize / 2, circleY + circleSize / 2, circleSize / 2, 0, Math.PI * 2, true);
         ctx.closePath();
-        ctx.clip(); // Mọi thao tác vẽ sau đây sẽ chỉ hiển thị trong hình tròn này
+        ctx.clip(); 
 
-        // Vẽ ảnh đã tải lên, đã cắt xén để lấp đầy hình vuông bao quanh khung tròn
+        // Vẽ ảnh đã tải lên, đã cắt xén
         drawCroppedImageToFill(uploadedImg, circleX, circleY, circleSize, circleSize);
         
-        ctx.restore(); // Khôi phục trạng thái canvas, kết thúc vùng cắt hình tròn
+        ctx.restore(); 
       }
 
-      // 3. Vẽ 3 dòng chữ phía dưới ảnh
+      // 3. Vẽ 3 dòng chữ
       ctx.fillStyle = "white";
       ctx.font = "bold 22px Arial";
-      const textY = 590; // Vẫn giữ vị trí này cho văn bản
-      const textX = 640; // Tọa độ X để căn giữa văn bản
+      
+      // Vị trí văn bản (Ước tính cho khu vực văn bản trên frame)
+      const textX = 640; 
+      const textYStart = 590; 
       ctx.textAlign = "center";
-      ctx.fillText(document.getElementById("line1").value || "", textX, textY);
-      ctx.fillText(document.getElementById("line2").value || "", textX, textY + 30);
-      ctx.fillText(document.getElementById("line3").value || "", textX, textY + 60);
+
+      // Danh xưng
+      ctx.fillText(document.getElementById("line1").value || "Danh xưng", textX, textYStart);
+      // Tên
+      ctx.fillText(document.getElementById("line2").value || "Tên của Anh/Chị", textX, textYStart + 30);
+      // Chức vụ
+      ctx.fillText(document.getElementById("line3").value || "Chức vụ", textX, textYStart + 60);
     }
 
-    // Lắng nghe sự kiện nhập liệu để cập nhật văn bản ngay lập tức
     document.querySelectorAll(".text-inputs input").forEach(input => {
       input.addEventListener("input", drawAll);
     });
