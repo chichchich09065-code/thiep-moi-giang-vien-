@@ -227,13 +227,12 @@
 
       // 1. Vẽ khung nền 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      // Ép frame.png vào kích thước A4 (1680x1188)
       ctx.drawImage(frame, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
-      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - ĐÃ CĂN CHỈNH CUỐI CÙNG
-      const circleX = 1365;      // Tọa độ X (Lệch phải -> Kéo sang trái)
-      const circleY = 385;       
-      const circleSize = 350;    
+      // 2. TỌA ĐỘ ẢNH (KHUNG TRÒN) - Tọa độ Canva đã chuyển đổi
+      const circleX = 1134;      
+      const circleY = 305;       
+      const circleSize = 330;    
 
       if (uploadedImg) {
         ctx.save(); 
@@ -249,13 +248,13 @@
         ctx.restore(); 
       }
 
-      // 3. Vị trí Văn bản - ĐÃ CĂN CHỈNH CUỐI CÙNG
+      // 3. Vị trí Văn bản - Tọa độ Canva đã chuyển đổi và Căn chỉnh tâm X
       ctx.fillStyle = "#1E2737"; 
       ctx.textAlign = "center";
       
-      const textX = 700; // Tọa độ X (Lệch trái -> Kéo sang phải, căn giữa cột thông tin)
-      const textYStart = 710; 
-      const lineHeight = 50; 
+      const textX = 700;       // Cố định để căn giữa cột thông tin
+      const textYStart = 805;  // Chân chữ Dòng Tên (tính từ Canva)
+      const lineHeight = 69;   // Khoảng cách dòng (tính từ Canva)
 
       const finalFontSizeName = 44; 
       const finalFontSizeJob = 38;
